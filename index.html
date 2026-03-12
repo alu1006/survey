@@ -1,5 +1,6 @@
 <!DOCTYPE html>
 <html lang="zh-TW">
+
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -142,7 +143,7 @@
             transition: all 0.2s ease;
         }
 
-        .rating-item input:checked + .rating-label {
+        .rating-item input:checked+.rating-label {
             background: #ffffff;
             border-color: var(--primary);
             box-shadow: 0 4px 6px -1px rgba(99, 102, 241, 0.1);
@@ -164,7 +165,7 @@
             white-space: nowrap;
         }
 
-        .rating-item input:checked + .rating-label .rating-text {
+        .rating-item input:checked+.rating-label .rating-text {
             color: var(--primary);
         }
 
@@ -196,7 +197,10 @@
         /* 成功動畫彈窗 */
         .success-overlay {
             position: fixed;
-            top: 0; left: 0; right: 0; bottom: 0;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
             background: rgba(255, 255, 255, 0.8);
             backdrop-filter: blur(8px);
             -webkit-backdrop-filter: blur(8px);
@@ -238,26 +242,35 @@
         }
 
         @keyframes bounce {
-            from { transform: translateY(0); }
-            to { transform: translateY(-10px); }
+            from {
+                transform: translateY(0);
+            }
+
+            to {
+                transform: translateY(-10px);
+            }
         }
 
         @media (max-width: 640px) {
             .container {
                 padding: 2rem 1.5rem;
             }
+
             .rating-group {
                 gap: 0.5rem;
             }
+
             .emoji {
                 font-size: 1.5rem;
             }
+
             .rating-text {
                 font-size: 0.75rem;
             }
         }
     </style>
 </head>
+
 <body>
 
     <div class="container">
@@ -274,7 +287,8 @@
 
             <div class="form-group">
                 <label for="email" class="form-label">電子郵件</label>
-                <input type="email" id="email" name="email" class="form-control" placeholder="example@email.com" required>
+                <input type="email" id="email" name="email" class="form-control" placeholder="example@email.com"
+                    required>
             </div>
 
             <div class="form-group">
@@ -320,7 +334,8 @@
 
             <div class="form-group">
                 <label for="feedback" class="form-label">具體建議或意見 (選填)</label>
-                <textarea id="feedback" name="feedback" class="form-control" placeholder="請告訴我們您可以改進的地方，或是您覺得最棒的部分！"></textarea>
+                <textarea id="feedback" name="feedback" class="form-control"
+                    placeholder="請告訴我們您可以改進的地方，或是您覺得最棒的部分！"></textarea>
             </div>
 
             <button type="submit" class="submit-btn">送出問卷</button>
@@ -332,25 +347,49 @@
         <div class="success-card">
             <div class="success-icon">🎉</div>
             <h2 style="color: var(--text-main); margin-bottom: 0.5rem;">感謝您的回饋！</h2>
-            <p style="color: var(--text-muted); margin-bottom: 1.5rem; line-height: 1.5;">我們已經收到您的問卷結果，將會持續改進以提供更好的服務。</p>
-            <button class="submit-btn" onclick="closeSuccess()" style="width: auto; padding: 0.75rem 2.5rem; margin-top: 0;">關閉</button>
+            <p style="color: var(--text-muted); margin-bottom: 1.5rem; line-height: 1.5;">我們已經收到您的問卷結果，將會持續改進以提供更好的服務。
+            </p>
+            <button class="submit-btn" onclick="closeSuccess()"
+                style="width: auto; padding: 0.75rem 2.5rem; margin-top: 0;">關閉</button>
         </div>
     </div>
 
     <script>
+        // 請將下方引號內的網址替換為您部署後取得的 Google Apps Script 網址
+        const scriptURL = 'https://script.google.com/macros/s/AKfycbzxTl18fTztHKeJQyxTIoSkmMlqpl2sSpRlKuM55FMAppEK6xhfkSl4SOyPmZdHtxR6/exec';
+
         function handleSubmit(event) {
             event.preventDefault(); // 阻止預設的表單送出行為
-            
-            // 若有後端API，可在這裡加入 AJAX / Fetch 程式碼
-            // const formData = new FormData(event.target);
-            // const data = Object.fromEntries(formData.entries());
-            // console.log("問卷資料：", data);
 
-            // 顯示成功動畫彈窗
-            document.getElementById('successOverlay').classList.add('active');
-            
-            // 清空表單
-            event.target.reset();
+            const form = event.target;
+            const submitBtn = form.querySelector('.submit-btn');
+            const originalBtnText = submitBtn.innerText;
+
+            // 更改按鈕狀態，避免重複點擊
+            submitBtn.innerText = '送出中...';
+            submitBtn.disabled = true;
+
+            const formData = new FormData(form);
+
+            fetch(scriptURL, {
+                method: 'POST',
+                body: formData
+            })
+                .then(response => {
+                    // 顯示成功動畫彈窗
+                    document.getElementById('successOverlay').classList.add('active');
+                    // 清空表單
+                    form.reset();
+                })
+                .catch(error => {
+                    console.error('Error!', error.message);
+                    alert("發送失敗，請稍後重試。");
+                })
+                .finally(() => {
+                    // 恢復按鈕狀態
+                    submitBtn.innerText = originalBtnText;
+                    submitBtn.disabled = false;
+                });
         }
 
         function closeSuccess() {
@@ -358,4 +397,5 @@
         }
     </script>
 </body>
+
 </html>
