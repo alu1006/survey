@@ -1,0 +1,45 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+    <meta charset="UTF-8">
+    <title>Supabase 測試連線</title>
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <script src="config.js"></script>
+</head>
+<body>
+    <h1>Supabase 連線測試</h1>
+    <button onclick="testConnection()">點我測試寫入一筆資料</button>
+    <pre id="result" style="background: #f0f0f0; padding: 10px; margin-top: 20px; min-height: 50px;"></pre>
+
+    <script>
+        const supabaseClient = supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+        const resultDiv = document.getElementById('result');
+
+        async function testConnection() {
+            resultDiv.innerText = "測試中，請稍候...";
+            try {
+                const testData = {
+                    name: "測試員 " + new Date().toLocaleTimeString(),
+                    email: "test@example.com",
+                    rating: 5,
+                    feedback: "這是一筆測試資料"
+                };
+
+                const { data, error } = await supabaseClient
+                    .from('survey_responses')
+                    .insert([testData])
+                    .select();
+
+                if (error) {
+                    throw error;
+                }
+
+                resultDiv.innerText = "✅ 寫入成功！\n回傳資料：" + JSON.stringify(data, null, 2);
+            } catch (err) {
+                console.error("寫入失敗:", err);
+                resultDiv.innerText = "❌ 寫入失敗！錯誤訊息：\n" + JSON.stringify(err, null, 2);
+            }
+        }
+    </script>
+</body>
+</html>

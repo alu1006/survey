@@ -4,7 +4,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>體驗滿意度問卷</title>
+    <title>體驗滿意度問卷 (Supabase 版本)</title>
     <!-- 引入 Google Fonts: Inter -->
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600&display=swap" rel="stylesheet">
     <style>
@@ -354,12 +354,21 @@
         </div>
     </div>
 
+    <!-- 引入 Supabase JS -->
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <!-- 引入設定檔 (包含 Supabase 網址與金鑰) -->
+    <script src="config.js"></script>
     <script>
-        // 請將下方引號內的網址替換為您部署後取得的 Google Apps Script 網址
-        const scriptURL = 'https://script.google.com/macros/s/AKfycbzxTl18fTztHKeJQyxTIoSkmMlqpl2sSpRlKuM55FMAppEK6xhfkSl4SOyPmZdHtxR6/exec';
+        // 初始化 Supabase 客戶端 (變數來自 config.js)
+        const supabaseClient = supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 
-        function handleSubmit(event) {
+        async function handleSubmit(event) {
             event.preventDefault(); // 阻止預設的表單送出行為
+
+            if (SUPABASE_URL === 'YOUR_SUPABASE_PROJECT_URL' || SUPABASE_ANON_KEY === 'YOUR_SUPABASE_ANON_KEY') {
+                alert("發送失敗：請先在原始碼中填入您的 Supabase URL 與 Anon Key。");
+                return;
+            }
 
             const form = event.target;
             const submitBtn = form.querySelector('.submit-btn');
@@ -370,26 +379,36 @@
             submitBtn.disabled = true;
 
             const formData = new FormData(form);
+            const dataToInsert = {
+                name: formData.get('name'),
+                email: formData.get('email'),
+                rating: parseInt(formData.get('rating'), 10),
+                // 若沒有輸入 feedback，會存成空字串。也可處理為 null:
+                feedback: formData.get('feedback') || null
+            };
 
-            fetch(scriptURL, {
-                method: 'POST',
-                body: formData
-            })
-                .then(response => {
-                    // 顯示成功動畫彈窗
-                    document.getElementById('successOverlay').classList.add('active');
-                    // 清空表單
-                    form.reset();
-                })
-                .catch(error => {
-                    console.error('Error!', error.message);
-                    alert("發送失敗，請稍後重試。");
-                })
-                .finally(() => {
-                    // 恢復按鈕狀態
-                    submitBtn.innerText = originalBtnText;
-                    submitBtn.disabled = false;
-                });
+            try {
+                // 將資料寫入 survey_responses 表格
+                const { data, error } = await supabaseClient
+                    .from('survey_responses')
+                    .insert([dataToInsert]);
+
+                if (error) {
+                    throw error;
+                }
+
+                // 顯示成功動畫彈窗
+                document.getElementById('successOverlay').classList.add('active');
+                // 清空表單
+                form.reset();
+            } catch (error) {
+                console.error('Error!', error);
+                alert("發送失敗，請確保 Supabase 資訊填寫正確並檢查網路連線。\n" + (error.message || ""));
+            } finally {
+                // 恢復按鈕狀態
+                submitBtn.innerText = originalBtnText;
+                submitBtn.disabled = false;
+            }
         }
 
         function closeSuccess() {
